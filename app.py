@@ -1,10 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import os
-import time
-import threading
-import webbrowser
 
 # Correspondances des niveaux d'évaluation
 niveau_linguistiques = {
@@ -99,11 +95,3 @@ if uploaded_file is not None:
     # Télécharger les données de l'évaluation finale
     csv_eval_finale = eval_finale_summary.to_csv(index=False)
     st.download_button(label="Télécharger les données de l'évaluation finale", data=csv_eval_finale, file_name='evaluation_finale_data.csv', mime='text/csv')
-
-def open_browser():
-    time.sleep(2)
-    webbrowser.open_new("http://localhost:8501")
-
-if __name__ == '__main__':
-    threading.Thread(target=open_browser).start()
-    os.system('streamlit run app.py')
