@@ -177,5 +177,17 @@ if uploaded_file is not None:
     st.write("Collaborateurs n'ayant pas atteint le niveau requis pour chaque compétence")
     underqualified = data[data['Evaluation finale'] < data['Niveau requis']]
     underqualified_summary = underqualified.groupby('Collaborateur').agg(
-        Competences=('Compétence', lambda x: ', '.join(x)),
-       
+        Competences=('Compétence', lambda x: ', '.join(x))
+    ).reset_index()
+
+    # Section pour les collaborateurs n'ayant pas atteint le niveau requis
+    st.write("Collaborateurs n'ayant pas atteint le niveau requis pour chaque compétence")
+    underqualified = data[data['Evaluation finale'] < data['Niveau requis']]
+    underqualified_summary = underqualified.groupby('Collaborateur').agg(
+        Competences=('Compétence', lambda x: ', '.join(x))
+    ).reset_index()
+    
+    # Affichage du tableau des collaborateurs n'ayant pas atteint le niveau requis
+    st.write("Tableau des collaborateurs n'ayant pas atteint le niveau requis")
+    st.dataframe(underqualified_summary)
+
