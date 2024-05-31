@@ -127,3 +127,48 @@ if uploaded_file is not None:
             fig_comparaison = px.bar(eval_data, x='Type d\'évaluation', y='Niveau', title=f'Comparaison pour {selected_collaborateur} sur la compétence "{selected_competence}"',
                                      labels={'Niveau': 'Niveau d\'évaluation'})
             st.plotly_chart(fig_comparaison)
+
+    # Section pour le nombre de confirmés et d'experts par département pour une compétence donnée
+    st.write("Nombre de Confirmés et Experts par Département pour une compétence donnée")
+    selected_competence_for_department = st.selectbox('Sélectionnez la Compétence pour le Décompte par Département', competences, key='department_competence')
+    
+    if selected_competence_for_department:
+        department_data = data[data['Compétence'] == selected_competence_for_department]
+        
+        confirmed_data = department_data[department_data['Evaluation finale Libellé'] == 'Confirmé']
+        expert_data = department_data[department_data['Evaluation finale Libellé'] == 'Expert']
+        
+        confirmed_count = confirmed_data.groupby('Département').agg(
+            Nombre_de_confirmés=('Collaborateur', 'count'),
+            Collaborateurs=('Collaborateur', lambda x: ', '.join(x))
+        ).reset_index()
+        
+        expert_count = expert_data.groupby('Département').agg(
+            Nombre_d_experts=('Collaborateur', 'count'),
+            Collaborateurs=('Collaborateur', lambda x: ', '.join(x))
+        ).reset_index()
+        
+        st.write("Confirmés par Département")
+        st.dataframe(confirmed_count)
+        
+        st.write("Experts par Département")
+        st.dataframe(expert_count)
+
+    # Section pour les compétences avec moins de 5 experts
+    st.write("Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Experts")
+    technical_skills = data[data['Domaine de compétence'] == 'Compétences techniques ferroviaires']
+    expert_summary = technical_skills[technical_skills['Evaluation finale Libellé'] == 'Expert'].groupby('Compétence').agg(
+        Nombre_d_experts=('Collaborateur', 'count')
+    ).reset_index()
+    
+    less_than_5_experts = expert_summary[expert_summary['Nombre_d_experts'] < 5]
+    st.dataframe(less_than_5_experts)
+
+    # Section pour les compétences avec moins de 5 confirmés
+    st.write("Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Confirmés")
+    confirmed_summary = technical_skills[technical_skills['Evaluation finale Libellé'] == 'Confirmé'].groupby('Compétence').agg(
+        Nombre_de_confirmés=('Collaborateur', 'count')
+    ).reset_index()
+    
+    less_than_5_confirmed = confirmed_summary[confirmed_summary['Nombre_de_confirmés'] < 5]
+    st.dataframe(less_than_5_confirmed)
