@@ -95,3 +95,24 @@ if uploaded_file is not None:
     # Télécharger les données de l'évaluation finale
     csv_eval_finale = eval_finale_summary.to_csv(index=False)
     st.download_button(label="Télécharger les données de l'évaluation finale", data=csv_eval_finale, file_name='evaluation_finale_data.csv', mime='text/csv')
+
+    # Sélection du collaborateur pour comparer les évaluations
+    st.write("Comparaison entre Auto-évaluation et Évaluation finale")
+    collaborateurs = selected_data['Collaborateur'].unique()
+    selected_collaborateur = st.selectbox('Sélectionnez le Collaborateur', collaborateurs)
+
+    if selected_collaborateur:
+        comparaison_data = selected_data[selected_data['Collaborateur'] == selected_collaborateur]
+        
+        if not comparaison_data.empty:
+            eval_data = pd.DataFrame({
+                'Type d\'évaluation': ['Auto-évaluation', 'Évaluation finale'],
+                'Niveau': [
+                    get_evaluation_label(comparaison_data['Domaine de compétence'].iloc[0], comparaison_data['Auto-évaluation'].iloc[0]),
+                    get_evaluation_label(comparaison_data['Domaine de compétence'].iloc[0], comparaison_data['Evaluation finale'].iloc[0])
+                ]
+            })
+
+            # Graphique de comparaison
+            fig_comparaison = px.bar(eval_data, x='Type d\'évaluation', y='Niveau', title=f'Comparaison pour {selected_collaborateur} sur la compétence "{selected_competence}"')
+            st.plotly_chart(fig_comparaison)
