@@ -172,3 +172,7 @@ if uploaded_file is not None:
     
     less_than_5_confirmed = confirmed_summary[confirmed_summary['Nombre_de_confirmés'] < 5]
     st.dataframe(less_than_5_confirmed)
+
+    # Section pour les collaborateurs n'ayant pas le niveau requis
+    st.write("Collaborateurs n'ayant pas le niveau requis pour une compétence donnée")
+    not_meeting_requirements = data[data['Evaluation finale'] < data['N
