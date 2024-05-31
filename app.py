@@ -15,6 +15,8 @@ niveau_autres = {
 
 # Fonction pour obtenir le libellé de l'évaluation
 def get_evaluation_label(domaine, niveau):
+    if pd.isna(niveau):
+        return 'Évaluation manquante'
     if domaine == 'Compétences linguistiques':
         return niveau_linguistiques.get(niveau, 'N/A')
     else:
