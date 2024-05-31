@@ -22,6 +22,14 @@ def get_evaluation_label(domaine, niveau):
     else:
         return niveau_autres.get(niveau, 'N/A')
 
+# Fonction pour obtenir le niveau numérique de l'évaluation
+def get_evaluation_level(domaine, libelle):
+    if domaine == 'Compétences linguistiques':
+        inverse_map = {v: k for k, v in niveau_linguistiques.items()}
+    else:
+        inverse_map = {v: k for k, v in niveau_autres.items()}
+    return inverse_map.get(libelle, -1)
+
 # Charger les données à partir d'un fichier Excel unique
 uploaded_file = st.file_uploader("Choisissez un fichier Excel", type="xlsx")
 
@@ -110,11 +118,12 @@ if uploaded_file is not None:
             eval_data = pd.DataFrame({
                 'Type d\'évaluation': ['Auto-évaluation', 'Évaluation finale'],
                 'Niveau': [
-                    get_evaluation_label(comparaison_data['Domaine de compétence'].iloc[0], comparaison_data['Auto-évaluation'].iloc[0]),
-                    get_evaluation_label(comparaison_data['Domaine de compétence'].iloc[0], comparaison_data['Evaluation finale'].iloc[0])
+                    comparaison_data['Auto-évaluation'].iloc[0],
+                    comparaison_data['Evaluation finale'].iloc[0]
                 ]
             })
 
             # Graphique de comparaison
-            fig_comparaison = px.bar(eval_data, x='Type d\'évaluation', y='Niveau', title=f'Comparaison pour {selected_collaborateur} sur la compétence "{selected_competence}"')
+            fig_comparaison = px.bar(eval_data, x='Type d\'évaluation', y='Niveau', title=f'Comparaison pour {selected_collaborateur} sur la compétence "{selected_competence}"',
+                                     labels={'Niveau': 'Niveau d\'évaluation'})
             st.plotly_chart(fig_comparaison)
