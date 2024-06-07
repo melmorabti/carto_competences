@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from streamlit_option_menu import option_menu
 
 # Correspondances des niveaux d'évaluation
 niveau_linguistiques = {
@@ -15,20 +16,10 @@ niveau_autres = {
 
 # Fonction pour obtenir le libellé de l'évaluation
 def get_evaluation_label(domaine, niveau):
-    if pd.isna(niveau):
-        return 'Évaluation manquante'
     if domaine == 'Compétences linguistiques':
         return niveau_linguistiques.get(niveau, 'N/A')
     else:
         return niveau_autres.get(niveau, 'N/A')
-
-# Fonction pour obtenir le niveau numérique de l'évaluation
-def get_evaluation_level(domaine, libelle):
-    if domaine == 'Compétences linguistiques':
-        inverse_map = {v: k for k, v in niveau_linguistiques.items()}
-    else:
-        inverse_map = {v: k for k, v in niveau_autres.items()}
-    return inverse_map.get(libelle, -1)
 
 # Charger les données à partir d'un fichier Excel unique
 uploaded_file = st.file_uploader("Choisissez un fichier Excel", type="xlsx")
@@ -62,132 +53,105 @@ if uploaded_file is not None:
         st.write(f"**Domaine de compétence :** {domaine}")
         st.write(f"**Sous-domaine de compétence :** {sous_domaine}")
 
-    # Graphique de l'auto-évaluation
-    st.write("Graphique de l'auto-évaluation par compétence")
-    fig_auto_eval = px.pie(selected_data, names='Auto-évaluation Libellé', title=f'Auto-évaluation pour la compétence "{selected_competence}"',
-                           hole=0.3)
-    fig_auto_eval.update_traces(textposition='inside', textinfo='percent+label+value')
+    # Menu des onglets
+    with st.sidebar:
+        selected = option_menu(
+            "Menu",
+            ["Auto-évaluation", "Évaluation finale", "Comparaison", "Nombre de Confirmés et Experts", "Alertes"],
+            icons=['bar-chart', 'bar-chart', 'bar-chart', 'list', 'exclamation'],
+            menu_icon="cast",
+            default_index=0,
+        )
 
-    st.plotly_chart(fig_auto_eval)
+    # Onglet Auto-évaluation
+    if selected == "Auto-évaluation":
+        st.header("Auto-évaluation")
+        fig_auto_eval = px.pie(selected_data, names='Auto-évaluation Libellé', title=f'Auto-évaluation pour la compétence "{selected_competence}"', hole=0.3)
+        fig_auto_eval.update_traces(textposition='inside', textinfo='percent+label+value')
+        st.plotly_chart(fig_auto_eval)
 
-    # Préparation des données pour le tableau de l'auto-évaluation
-    auto_eval_summary = selected_data.groupby('Auto-évaluation Libellé').agg(
-        Nombre_de_collaborateurs=('Collaborateur', 'count'),
-        Noms_des_collaborateurs=('Collaborateur', lambda x: ', '.join(x))
-    ).reset_index()
+        auto_eval_summary = selected_data.groupby('Auto-évaluation Libellé').agg(
+            Nombre_de_collaborateurs=('Collaborateur', 'count'),
+            Noms_des_collaborateurs=('Collaborateur', lambda x: ', '.join(x))
+        ).reset_index()
 
-    # Affichage du tableau de l'auto-évaluation
-    st.write("Données de l'auto-évaluation")
-    st.dataframe(auto_eval_summary)
-    
-    # Télécharger les données de l'auto-évaluation
-    csv_auto_eval = auto_eval_summary.to_csv(index=False)
-    st.download_button(label="Télécharger les données de l'auto-évaluation", data=csv_auto_eval, file_name='auto_evaluation_data.csv', mime='text/csv')
-
-    # Graphique de l'évaluation finale
-    st.write("Graphique de l'évaluation finale par compétence")
-    fig_eval_finale = px.pie(selected_data, names='Evaluation finale Libellé', title=f'Évaluation finale pour la compétence "{selected_competence}"',
-                             hole=0.3)
-    fig_eval_finale.update_traces(textposition='inside', textinfo='percent+label+value')
-
-    st.plotly_chart(fig_eval_finale)
-
-    # Préparation des données pour le tableau de l'évaluation finale
-    eval_finale_summary = selected_data.groupby('Evaluation finale Libellé').agg(
-        Nombre_de_collaborateurs=('Collaborateur', 'count'),
-        Noms_des_collaborateurs=('Collaborateur', lambda x: ', '.join(x))
-    ).reset_index()
-
-    # Affichage du tableau de l'évaluation finale
-    st.write("Données de l'évaluation finale")
-    st.dataframe(eval_finale_summary)
-    
-    # Télécharger les données de l'évaluation finale
-    csv_eval_finale = eval_finale_summary.to_csv(index=False)
-    st.download_button(label="Télécharger les données de l'évaluation finale", data=csv_eval_finale, file_name='evaluation_finale_data.csv', mime='text/csv')
-
-    # Sélection du collaborateur pour comparer les évaluations
-    st.write("Comparaison entre Auto-évaluation et Évaluation finale")
-    collaborateurs = selected_data['Collaborateur'].unique()
-    selected_collaborateur = st.selectbox('Sélectionnez le Collaborateur', collaborateurs)
-
-    if selected_collaborateur:
-        comparaison_data = selected_data[selected_data['Collaborateur'] == selected_collaborateur]
+        st.write("Données de l'auto-évaluation")
+        st.dataframe(auto_eval_summary)
         
-        if not comparaison_data.empty:
-            eval_data = pd.DataFrame({
-                'Type d\'évaluation': ['Auto-évaluation', 'Évaluation finale'],
-                'Niveau': [
-                    comparaison_data['Auto-évaluation'].iloc[0],
-                    comparaison_data['Evaluation finale'].iloc[0]
-                ]
-            })
+        csv_auto_eval = auto_eval_summary.to_csv(index=False)
+        st.download_button(label="Télécharger les données de l'auto-évaluation", data=csv_auto_eval, file_name='auto_evaluation_data.csv', mime='text/csv')
 
-            # Graphique de comparaison
-            fig_comparaison = px.bar(eval_data, x='Type d\'évaluation', y='Niveau', title=f'Comparaison pour {selected_collaborateur} sur la compétence "{selected_competence}"',
-                                     labels={'Niveau': 'Niveau d\'évaluation'})
+    # Onglet Évaluation finale
+    elif selected == "Évaluation finale":
+        st.header("Évaluation finale")
+        fig_eval_finale = px.pie(selected_data, names='Evaluation finale Libellé', title=f'Évaluation finale pour la compétence "{selected_competence}"', hole=0.3)
+        fig_eval_finale.update_traces(textposition='inside', textinfo='percent+label+value')
+        st.plotly_chart(fig_eval_finale)
+
+        eval_finale_summary = selected_data.groupby('Evaluation finale Libellé').agg(
+            Nombre_de_collaborateurs=('Collaborateur', 'count'),
+            Noms_des_collaborateurs=('Collaborateur', lambda x: ', '.join(x))
+        ).reset_index()
+
+        st.write("Données de l'évaluation finale")
+        st.dataframe(eval_finale_summary)
+        
+        csv_eval_finale = eval_finale_summary.to_csv(index=False)
+        st.download_button(label="Télécharger les données de l'évaluation finale", data=csv_eval_finale, file_name='evaluation_finale_data.csv', mime='text/csv')
+
+    # Onglet Comparaison
+    elif selected == "Comparaison":
+        st.header("Comparaison entre Auto-évaluation et Évaluation finale")
+        collaborateurs = selected_data['Collaborateur'].unique()
+        selected_collaborateur = st.selectbox('Sélectionnez le Collaborateur', collaborateurs)
+
+        if selected_collaborateur:
+            collab_data = selected_data[selected_data['Collaborateur'] == selected_collaborateur]
+            fig_comparaison = px.bar(
+                collab_data.melt(id_vars=['Collaborateur', 'Compétence'], value_vars=['Auto-évaluation Libellé', 'Evaluation finale Libellé'], 
+                                 var_name='Type', value_name='Niveau'),
+                x='Compétence', y='Niveau', color='Type', barmode='group',
+                title=f'Comparaison des évaluations pour le collaborateur {selected_collaborateur}'
+            )
             st.plotly_chart(fig_comparaison)
 
-    # Section pour le nombre de confirmés et d'experts par département pour une compétence donnée
-    st.write("Nombre de Confirmés et Experts par Département pour une compétence donnée")
-    selected_competence_for_department = st.selectbox('Sélectionnez la Compétence pour le Décompte par Département', competences, key='department_competence')
-    
-    if selected_competence_for_department:
-        department_data = data[data['Compétence'] == selected_competence_for_department]
-        
-        confirmed_data = department_data[department_data['Evaluation finale Libellé'] == 'Confirmé']
-        expert_data = department_data[department_data['Evaluation finale Libellé'] == 'Expert']
-        
-        confirmed_count = confirmed_data.groupby('Département').agg(
-            Nombre_de_confirmés=('Collaborateur', 'count'),
-            Collaborateurs=('Collaborateur', lambda x: ', '.join(x))
-        ).reset_index()
-        
-        expert_count = expert_data.groupby('Département').agg(
-            Nombre_d_experts=('Collaborateur', 'count'),
-            Collaborateurs=('Collaborateur', lambda x: ', '.join(x))
-        ).reset_index()
-        
-        st.write("Confirmés par Département")
-        st.dataframe(confirmed_count)
-        
-        st.write("Experts par Département")
-        st.dataframe(expert_count)
+    # Onglet Nombre de Confirmés et Experts
+    elif selected == "Nombre de Confirmés et Experts":
+        st.header("Nombre de Confirmés et Experts par Département")
+        selected_competence = st.selectbox('Sélectionnez une Compétence', competences)
+        if selected_competence:
+            filtered_data = data[data['Compétence'] == selected_competence]
+            confirmes_experts = filtered_data[filtered_data['Evaluation finale Libellé'].isin(['Confirmé', 'Expert'])]
+            confirmes_experts_summary = confirmes_experts.groupby(['Département', 'Evaluation finale Libellé']).agg(
+                Nombre_de_collaborateurs=('Collaborateur', 'count'),
+                Noms_des_collaborateurs=('Collaborateur', lambda x: ', '.join(x))
+            ).reset_index()
 
-    # Section pour les compétences avec moins de 5 experts
-    st.write("Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Experts")
-    technical_skills = data[data['Domaine de compétence'] == 'Compétences techniques ferroviaires']
-    expert_summary = technical_skills[technical_skills['Evaluation finale Libellé'] == 'Expert'].groupby('Compétence').agg(
-        Nombre_d_experts=('Collaborateur', 'count')
-    ).reset_index()
-    
-    less_than_5_experts = expert_summary[expert_summary['Nombre_d_experts'] < 5]
-    st.dataframe(less_than_5_experts)
+            st.write(f"Nombre de Confirmés et Experts par Département pour la compétence {selected_competence}")
+            st.dataframe(confirmes_experts_summary)
 
-    # Section pour les compétences avec moins de 5 confirmés
-    st.write("Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Confirmés")
-    confirmed_summary = technical_skills[technical_skills['Evaluation finale Libellé'] == 'Confirmé'].groupby('Compétence').agg(
-        Nombre_de_confirmés=('Collaborateur', 'count')
-    ).reset_index()
-    
-    less_than_5_confirmed = confirmed_summary[confirmed_summary['Nombre_de_confirmés'] < 5]
-    st.dataframe(less_than_5_confirmed)
-    
+    # Onglet Alertes
+    elif selected == "Alertes":
+        st.header("Alertes")
+        experts_alert = data[(data['Domaine de compétence'] == 'Compétences techniques ferroviaires') &
+                             (data['Evaluation finale Libellé'] == 'Expert')].groupby('Compétence').filter(lambda x: len(x) < 5)
+        confirmes_alert = data[(data['Domaine de compétence'] == 'Compétences techniques ferroviaires') &
+                               (data['Evaluation finale Libellé'] == 'Confirmé')].groupby('Compétence').filter(lambda x: len(x) < 5)
+
+        st.write("Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Experts")
+        st.dataframe(experts_alert[['Compétence', 'Collaborateur']].drop_duplicates())
+
+        st.write("Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Confirmés")
+        st.dataframe(confirmes_alert[['Compétence', 'Collaborateur']].drop_duplicates())
+        
     # Section pour les collaborateurs n'ayant pas atteint le niveau requis
-    st.write("Collaborateurs n'ayant pas atteint le niveau requis pour chaque compétence")
-    underqualified = data[data['Evaluation finale'] < data['Requis']]
-    underqualified_summary = underqualified.groupby('Collaborateur').agg(
-        Competences=('Compétence', lambda x: ', '.join(x))
-    ).reset_index()
+    if 'Niveau requis' in data.columns:
+        st.header("Collaborateurs n'ayant pas atteint le niveau requis")
+        underqualified = data[data['Evaluation finale'] < data['Niveau requis']]
+        underqualified_summary = underqualified.groupby('Collaborateur').agg(
+            Competences_non_atteintes=('Compétence', lambda x: ', '.join(x))
+        ).reset_index()
 
-    # Section pour les collaborateurs n'ayant pas atteint le niveau requis
-    st.write("Collaborateurs n'ayant pas atteint le niveau requis pour chaque compétence")
-    underqualified = data[data['Evaluation finale'] < data['Requis']]
-    underqualified_summary = underqualified.groupby('Collaborateur').agg(
-        Competences=('Compétence', lambda x: ', '.join(x))
-    ).reset_index()
-    
-    # Affichage du tableau des collaborateurs n'ayant pas atteint le niveau requis
-    st.write("Tableau des collaborateurs n'ayant pas atteint le niveau requis")
-    st.dataframe(underqualified_summary)
-
+        # Affichage du tableau des collaborateurs n'ayant pas atteint le niveau requis
+        st.write("Collaborateurs n'ayant pas atteint le niveau requis pour leurs compétences")
+        st.dataframe(underqualified_summary)
