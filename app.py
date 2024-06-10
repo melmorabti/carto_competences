@@ -1,4 +1,4 @@
-import streamlit as st
+icalimport streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_option_menu import option_menu
@@ -46,7 +46,7 @@ if uploaded_file is not None:
         icons=["clipboard-check", "clipboard-data", "bar-chart", "building", "bell"],
         menu_icon="cast",
         default_index=0,
-        orientation="horizontal",
+        orientation="vertical",  # Change orientation to vertical
     )
 
     # Filtre par domaine de compétence et compétence
