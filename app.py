@@ -168,7 +168,7 @@ if uploaded_file is not None:
 
         # Section pour les collaborateurs n'ayant pas atteint le niveau requis
         st.header("Collaborateurs n'ayant pas atteint le niveau requis")
-        underqualified = data[data['Evaluation finale'] < data['Niveau requis']]
+        underqualified = data[data['Evaluation finale'] < data['Requis']]
         underqualified_summary = underqualified.groupby('Collaborateur').agg(
             Competences=('Compétence', lambda x: ', '.join(x))
         ).reset_index()
