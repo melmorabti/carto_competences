@@ -40,14 +40,15 @@ if uploaded_file is not None:
     st.title("Analyse des Compétences des Collaborateurs")
 
     # Menu des onglets
-    selected_tab = option_menu(
-        menu_title=None,  # Hide the menu title
-        options=["Auto-évaluation", "Évaluation finale", "Comparaison", "Confirmés et Experts par Département", "Alertes"],
-        icons=["clipboard-check", "clipboard-data", "bar-chart", "building", "bell"],
-        menu_icon="cast",
-        default_index=0,
-        orientation="vertical",  # Change orientation to vertical
-    )
+    with st.sidebar:
+        selected_tab = option_menu(
+            menu_title="Menu",  # Show the menu title
+            options=["Auto-évaluation", "Évaluation finale", "Comparaison", "Confirmés et Experts par Département", "Alertes"],
+            icons=["clipboard-check", "clipboard-data", "bar-chart", "building", "bell"],
+            menu_icon="cast",
+            default_index=0,
+            orientation="vertical",  # Change orientation to vertical
+        )
 
     # Filtre par domaine de compétence et compétence
     domaines = data['Domaine de compétence'].dropna().unique()
@@ -127,15 +128,15 @@ if uploaded_file is not None:
 
     elif selected_tab == "Confirmés et Experts par Département":
         st.header("Confirmés et Experts par Département")
-        selected_competence_dept = st.selectbox('Sélectionnez la Compétence pour le Département', competences)
-        data_competence_dept = data[data['Compétence'] == selected_competence_dept]
+        # Utiliser la compétence sélectionnée précédemment
+        data_competence_dept = data[data['Compétence'] == selected_competence]
 
         # Compter le nombre de confirmés et d'experts pour tout l'établissement
         total_confirmes = data_competence_dept[data_competence_dept['Evaluation finale Libellé'] == 'Confirmé']['Collaborateur'].nunique()
         total_experts = data_competence_dept[data_competence_dept['Evaluation finale Libellé'] == 'Expert']['Collaborateur'].nunique()
         
-        st.write(f"Nombre total de Confirmés pour la compétence '{selected_competence_dept}': {total_confirmes}")
-        st.write(f"Nombre total d'Experts pour la compétence '{selected_competence_dept}': {total_experts}")
+        st.write(f"Nombre total de Confirmés pour la compétence '{selected_competence}': {total_confirmes}")
+        st.write(f"Nombre total d'Experts pour la compétence '{selected_competence}': {total_experts}")
 
         # Compter le nombre de confirmés et d'experts par département
         dept_summary = data_competence_dept.groupby(['Département', 'Evaluation finale Libellé']).agg(
