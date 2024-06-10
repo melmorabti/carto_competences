@@ -50,7 +50,7 @@ if uploaded_file is not None:
     )
 
     # Filtre par domaine de compétence et compétence
-    domaines = data['Domaine de compétence'].unique()
+    domaines = data['Domaine de compétence'].dropna().unique()
     selected_domaine = st.selectbox('Sélectionnez le Domaine de Compétence', domaines)
     competences = data[data['Domaine de compétence'] == selected_domaine]['Compétence'].unique()
     selected_competence = st.selectbox('Sélectionnez la Compétence', competences)
@@ -153,7 +153,13 @@ if uploaded_file is not None:
     elif selected_tab == "Alertes":
         st.header("Alertes")
 
-                # Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Confirmés
+        # Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Experts
+        st.subheader("Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Experts")
+        alerte_experts = data[(data['Domaine de compétence'] == 'Compétences techniques ferroviaires') & 
+                              (data['Evaluation finale Libellé'] == 'Expert')].groupby('Compétence').filter(lambda x: x['Collaborateur'].nunique() < 5)
+        st.dataframe(alerte_experts)
+
+        # Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Confirmés
         st.subheader("Compétences du domaine 'Compétences techniques ferroviaires' avec moins de 5 Confirmés")
         alerte_confirmes = data[(data['Domaine de compétence'] == 'Compétences techniques ferroviaires') & 
                                 (data['Evaluation finale Libellé'] == 'Confirmé')].groupby('Compétence').filter(lambda x: x['Collaborateur'].nunique() < 5)
@@ -173,3 +179,4 @@ if uploaded_file is not None:
         # Télécharger les données des collaborateurs n'ayant pas atteint le niveau requis
         csv_underqualified = underqualified_summary.to_csv(index=False)
         st.download_button(label="Télécharger les données des collaborateurs n'ayant pas atteint le niveau requis", data=csv_underqualified, file_name='underqualified_data.csv', mime='text/csv')
+
